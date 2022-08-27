@@ -1,0 +1,70 @@
+import json
+import requests
+import numpy as np 
+from datetime import datetime
+
+DATE = datetime.today().strftime('%Y-%m-%d')
+ARENA = 29
+ROYAL = 1111
+RIO = 748
+MONOPOL = 981
+MAXIM = 952
+CINEMAS = [ARENA, ROYAL, RIO, MONOPOL, MAXIM]
+
+def build_URI():
+    s = "https://www.kinoheld.de/ajax/getShowsForCinemas?"
+    for c in CINEMAS:
+        s += ("cinemaIds[]=" + str(c) + "&")
+    s += "lang=en"
+    return s
+
+def get_json(uri):
+    return requests.get(uri).json()
+
+def extract_data(data, cinemaId):
+    shows = data["shows"]
+    movies = data["movies"]
+    shows_today = list(filter(lambda s : s["date"] == DATE and s["cinemaId"] == cinemaId, shows)) 
+    # dictionary that maps movieIds to 
+    # - list of pairs : (time slots, OmU/OV/etc)
+    # - title
+    # - duration
+    # - trailer
+    map_movie = {}
+    for s in shows_today:
+        if s["movieId"] in map_movie.keys():
+            map_movie[s["movieId"]][0].append(s["time"])
+        else:
+            map_movie[s["movieId"]] = [[s["time"]]]
+
+    movies_today = list(filter(lambda m : m in map_movie.keys(), movies))
+    for m in movies_today:
+        if "title_orig" in movies[m]:
+            map_movie[m].append([movies[m]["title_orig"]])
+        else:
+            map_movie[m].append([movies[m]["title"]])
+        map_movie[m].append([movies[m]["duration"]])
+        map_movie[m].append([movies[m]["trailers"][0]["url"]])
+    return map_movie
+
+def start ():
+    complete_json = get_json(build_URI())
+    print(complete_json["movies"]["22205"]["description"])
+    # filter for a specific cinema and let it handle it
+    print("Vorstellungen im Rio:")
+    print(extract_data(complete_json, RIO))
+    print("Vorstellungen im Arena:")
+    print(extract_data(complete_json, ARENA))
+    print("Vorstellungen im Neuen Maxim:")
+    print(extract_data(complete_json, MAXIM))
+    print("Vorstellungen im Royal:")
+    print(extract_data(complete_json, ROYAL))
+    print("Vorstellungen im Monopol:")
+    print(extract_data(complete_json, MONOPOL))
+
+def main():
+    print("Folgende Filme laufen heute:")
+    start()
+
+if __name__ == "__main__":
+    main()
