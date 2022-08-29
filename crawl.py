@@ -1,6 +1,5 @@
 import json
 import requests
-import numpy as np 
 from datetime import datetime
 
 DATE = datetime.today().strftime('%Y-%m-%d')
