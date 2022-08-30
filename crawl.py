@@ -8,7 +8,8 @@ ROYAL = 1111
 RIO = 748
 MONOPOL = 981
 MAXIM = 952
-CINEMAS = [ARENA, ROYAL, RIO, MONOPOL, MAXIM]
+MUSEUM = 995
+CINEMAS = [ARENA, ROYAL, RIO, MONOPOL, MAXIM, MUSEUM]
 
 def build_URI():
     s = "https://www.kinoheld.de/ajax/getShowsForCinemas?"
@@ -19,6 +20,8 @@ def build_URI():
 
 def get_json(uri):
     return requests.get(uri).json()
+
+complete_json = get_json(build_URI())
 
 def extract_data(data, cinemaId):
     shows = data["shows"]
@@ -46,24 +49,11 @@ def extract_data(data, cinemaId):
         map_movie[m].append([movies[m]["trailers"][0]["url"]])
     return map_movie
 
-def start ():
-    complete_json = get_json(build_URI())
-    print(complete_json["movies"]["22205"]["description"])
-    # filter for a specific cinema and let it handle it
-    print("Vorstellungen im Rio:")
-    print(extract_data(complete_json, RIO))
-    print("Vorstellungen im Arena:")
-    print(extract_data(complete_json, ARENA))
-    print("Vorstellungen im Neuen Maxim:")
-    print(extract_data(complete_json, MAXIM))
-    print("Vorstellungen im Royal:")
-    print(extract_data(complete_json, ROYAL))
-    print("Vorstellungen im Monopol:")
-    print(extract_data(complete_json, MONOPOL))
+def get_data_by_cinema():
+    map_cinema = {}
+    for cinema in CINEMAS:
+        map_cinema[cinema] = extract_data(complete_json, cinema)
+    return map_cinema
 
-def main():
-    print("Folgende Filme laufen heute:")
-    start()
+data_by_cinema = get_data_by_cinema()
 
-if __name__ == "__main__":
-    main()
