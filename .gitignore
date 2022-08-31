@@ -1,2 +1,4 @@
 *.txt
 __pycache__
+html/[0-9]*.html
+html/_*.html

@@ -1,4 +1,4 @@
-from crawl import data_by_cinema, CINEMAS
+from crawl import data_by_cinema, CINEMAS, data_by_movie
 
 cinemas_string = ["Arena", "Royal", "Rio", "Monopol", "Neues Maxim", "Museum Lichtspiele"]
 
@@ -16,11 +16,13 @@ start_string = """<!DOCTYPE html>
         </head>
         <body>"""
 
+end_string = "</body>\n</html>"
+
 def index_builder_list (data):
     s = ""
-    for show in data:
-        s += "\t<li>" + data[show][1][0] + ":"
-        for time in data[show][0]:
+    for show in data.values():
+        s += "\t<li>" + show[1][0] + ":"
+        for time in show[0]:
            s += " " + time 
            s += "\n"
     s += "</ul>"
@@ -38,14 +40,20 @@ def index():
     f = open("html/index.html", "w")
     f.write(start_string)
     f.write(index_builder())
-    f.write("</body>\n</html>")
+    f.write(end_string)
     f.close()
 
-def movie_sites():
-    return 0
+def movie_sites_builder():
+    for movieId, info in data_by_movie.items():
+        path = "html/" + str(movieId) + ".html"
+        f = open(path, "w")
+        f.write(start_string)
+        f.write("<p>" + info[3] + "</p>")
+        f.write(end_string)
+        f.close()
 
 def main():
-    index()
+    movie_sites_builder()
 
 if __name__ == "__main__":
     main() 
