@@ -45,10 +45,13 @@ def extract_data(data, cinemaId):
         if "title_orig" in movies[m]:
             map_movie[m].append([movies[m]["title_orig"]])
         else:
-            map_movie[m].append([movies[m]["title"]])
-        map_movie[m].append([movies[m]["duration"]])
-        map_movie[m].append([movies[m]["trailers"][0]["url"]])
-        map_movie[m].append([movies[m]["description"]])
+            map_movie[m].append(movies[m]["title"])
+        map_movie[m].append(movies[m]["duration"])
+        if "trailers" in movies[m]:
+            map_movie[m].append(movies[m]["trailers"][0]["url"])
+        else:
+            map_movie[m].append("No Trailer")
+        map_movie[m].append(movies[m]["description"])
     return map_movie
 
 def get_data_by_cinema():
@@ -72,3 +75,5 @@ def get_data_by_movie():
     return movieDict
 
 data_by_movie = get_data_by_movie()
+#if __name__ == "__main__":
+ #   print(complete_json)
