@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h1>Filmvorstellungen München</h1>
+<h1>Filmvorstellungen München am {{date[8:10]}}.{{date[5:7]}}.{{date[0:4]}}</h1>
 <div class="list-group">
     {% for movie in movies %}
     <a href="/{{movie}}" class="list-group-item list-group-item-action"><b>{{movie}}</b><br>

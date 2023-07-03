@@ -1,5 +1,5 @@
 #!/bin/python3
-from scrape import cinema_per_movie, CINEMAS, data_by_movie, letterboxd
+from scrape import cinema_per_movie, data_by_movie, letterboxd, DATE
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
 import os
@@ -19,7 +19,7 @@ def movie_sites(movie):
 
 @app.route('/')
 def home():
-    return render_template('home.html', movies=cinema_per_movie.keys(), data=cinema_per_movie)
+    return render_template('home.html', movies=cinema_per_movie.keys(), data=cinema_per_movie, date=DATE)
 
 if __name__ == "__main__":
     app.run(host='127.0.0.0', port=5000)

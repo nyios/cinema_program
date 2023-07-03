@@ -1,9 +1,10 @@
 import json
 import requests
 import bs4
+import os
 from datetime import datetime
 
-DATE = datetime.today().strftime('%Y-%m-%d')
+DATE = datetime.today().strftime('%Y-%m-%d') if os.getenv('CINEMA_DATE') == None else os.getenv('CINEMA_DATE')
 ARENA = 29
 ROYAL = 1111
 RIO = 748
@@ -60,6 +61,7 @@ def get_cinema_data():
     """
     shows = data["shows"]
     movies = data["movies"]
+    print(DATE)
     shows_today = list(filter(lambda s : s["date"] == DATE, shows)) 
     map_movie = {}
     groups = id_groups()
@@ -148,5 +150,5 @@ def get_letterboxd_rating():
 
 letterboxd = get_letterboxd_rating()
 
-#if __name__ == "__main__":
-#    print(get_letterboxd_rating())
+if __name__ == "__main__":
+    print(get_cinema_data())
