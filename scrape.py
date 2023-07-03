@@ -7,13 +7,12 @@ ARENA = 29
 ROYAL = 1111
 RIO = 748
 MONOPOL = 981
-MAXIM = 952
 MUSEUM = 995
-CINEMAS = [ARENA, ROYAL, RIO, MONOPOL, MAXIM, MUSEUM]
+CINEMAS = {ARENA: 'Arena', ROYAL: 'Royal Filmpalast', RIO: 'Rio', MONOPOL: 'Monopol', MUSEUM: 'Museum Lichtspiele'}
 
 def build_URI():
     s = "https://www.kinoheld.de/ajax/getShowsForCinemas?"
-    for c in CINEMAS:
+    for c in CINEMAS.keys():
         s += ("cinemaIds[]=" + str(c) + "&")
     s += "lang=en"
     return s
@@ -21,59 +20,67 @@ def build_URI():
 def get_json(uri):
     return requests.get(uri).json()
 
-complete_json = get_json(build_URI())
+data = get_json(build_URI())
 
-def extract_data(data, cinemaId):
+def get_cinema_data():
+    """
+    return dictionary that maps movie names to a list of tuples containing:
+    - name of the cinema this movie is running in
+    - a list of times this movie is showing and if it is OV/OmU/synchronized
+    """
     shows = data["shows"]
     movies = data["movies"]
-    shows_today = list(filter(lambda s : s["date"] == DATE and s["cinemaId"] == cinemaId, shows)) 
-    # dictionary that maps movieIds to 
-    # - list of pairs : (time slots, OmU/OV/etc)
-    # - title
-    # - duration
-    # - trailer
-    # - description
+    shows_today = list(filter(lambda s : s["date"] == DATE, shows)) 
     map_movie = {}
-    for s in shows_today:
-        if s["movieId"] in map_movie.keys():
-            map_movie[s["movieId"]][0].append(s["time"])
-        else:
-            map_movie[s["movieId"]] = [[s["time"]]]
-
-    movies_today = list(filter(lambda m : m in map_movie.keys(), movies))
-    for m in movies_today:
-        if "title_orig" in movies[m]:
-            map_movie[m].append([movies[m]["title_orig"]])
-        else:
-            map_movie[m].append(movies[m]["title"])
-        map_movie[m].append(movies[m]["duration"])
-        if "trailers" in movies[m]:
-            map_movie[m].append(movies[m]["trailers"][0]["url"])
-        else:
-            map_movie[m].append("No Trailer")
-        map_movie[m].append(movies[m]["description"])
+    for movie in movies.values():
+        if movie['id'] == None:
+            continue
+        cinema_dictionary = {}
+        for show in shows_today:
+            if show['movieId'] == movie['id']:
+                current_cinema = CINEMAS[show['cinemaId']]
+                if show['flags']:
+                    mode = show['flags'][0]['name']
+                else:
+                    mode = 'Deutsch'
+                if current_cinema in cinema_dictionary.keys():
+                    cinema_dictionary[current_cinema].append((show['time'],mode)) 
+                else:
+                    cinema_dictionary[current_cinema] = [(show['time'],mode)] 
+        name = movie['name']
+        # only lowercase
+        if name.isupper():
+            name = name[0] + name[1::].lower()
+        if len(cinema_dictionary.items()) != 0:
+            map_movie[name] = cinema_dictionary
     return map_movie
 
-def get_data_by_cinema():
-    map_cinema = {}
-    for cinema in CINEMAS:
-        map_cinema[cinema] = extract_data(complete_json, cinema)
-    return map_cinema
-
-data_by_cinema = get_data_by_cinema()
-
 def get_data_by_movie():
-    movieIds = []
-    movieTitles = []
-    movieDict = {} 
-    for movies in data_by_cinema.values():
-        for movieId, value in movies.items():
-            if not movieId in movieIds and not value[1] in movieTitles:
-                movieIds.append(movieId)
-                movieTitles.append(value[1])
-                movieDict[movieId] = value
-    return movieDict
+    """
+    Return dictionary that maps movie titles to 
+    - duration
+    - poster image url
+    - description
+    - trailer, if available
+    """
+    map_movie = {}
+    movies = data["movies"]
+    for movie in movies.values():
+        if movie['id'] == None:
+            continue
+        if movie['hasTrailer']:
+            trailer = movie['trailers'][0]['url']
+        else:
+            trailer = ""
+        name = movie['name']
+        # only lowercase
+        if name.isupper():
+            name = name[0] + name[1::].lower()
+        map_movie[name] = (movie['duration'], movie['lazyImage'], movie['description'], trailer)
+
+    return map_movie
 
 data_by_movie = get_data_by_movie()
+cinema_per_movie = get_cinema_data()
 #if __name__ == "__main__":
- #   print(complete_json)
+#    print(data_by_movie)

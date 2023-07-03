@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Filmvorstellungen München</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  </head>
+  <body>
+      <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+          <a class="navbar-brand" href="/">Kinoprogramm</a>
+      </nav>
+      <main role="main" class="container" style="margin-top:100px">
+          <div>
+          {% for message in get_flashed_messages() %}
+          <div class=flash>{{ message }}</div>
+          {% endfor %}
+          {% block body %}{% endblock %}
+          </div>
+      </main>
+    <!-- Optional JavaScript -->
+      <script src="{{ url_for('static', filename='jquery-3.6.4.slim.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  </body>
+</html>
+

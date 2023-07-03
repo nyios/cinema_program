@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<h1>{{name}}</h1>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <img src={{entry[1]}}>
+        </div>
+        <div class="col-8">
+            {{entry[2]}}<br>
+            <b>Dauer:</b> {{entry[0]}} Minuten<br>
+            <b>Trailer:</b> <a href={{entry[3]}}>{{entry[3]}}</a>
+        </div>
+    </div>
+<div>
+{% endblock %}
