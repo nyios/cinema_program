@@ -1,5 +1,6 @@
 import json
 import requests
+import bs4
 from datetime import datetime
 
 DATE = datetime.today().strftime('%Y-%m-%d')
@@ -22,6 +23,35 @@ def get_json(uri):
 
 data = get_json(build_URI())
 
+def id_groups():
+    """
+    returns a list of lists
+    each sublist contains movie ids that map to the same movie
+    """
+    movies = data['movies']
+    id_groups = []
+    name_id_list = []
+    for movie in movies.values():
+        if movie['id'] != None:
+            name_id_list.append((movie['name'], movie['id']))
+    skippers = []
+    index = 0
+    for i in range(0, len(name_id_list)):
+        if i in skippers:
+            continue
+        id_groups.append([name_id_list[i][1]])
+        for j in range(i+1, len(name_id_list)):
+            if (name_id_list[i][0].lower() == name_id_list[j][0].lower() 
+                or name_id_list[j][0].startswith(name_id_list[i][0].lower())
+                or name_id_list[i][0].startswith(name_id_list[j][0].lower())):
+                id_groups[index].append(name_id_list[j][1])
+                skippers.append(j)
+        index += 1
+    return id_groups
+
+
+
+
 def get_cinema_data():
     """
     return dictionary that maps movie names to a list of tuples containing:
@@ -32,22 +62,21 @@ def get_cinema_data():
     movies = data["movies"]
     shows_today = list(filter(lambda s : s["date"] == DATE, shows)) 
     map_movie = {}
-    for movie in movies.values():
-        if movie['id'] == None:
-            continue
+    groups = id_groups()
+    for movie_ids in groups:
         cinema_dictionary = {}
         for show in shows_today:
-            if show['movieId'] == movie['id']:
+            if show['movieId'] in movie_ids:
                 current_cinema = CINEMAS[show['cinemaId']]
                 if show['flags']:
-                    mode = show['flags'][0]['name']
+                    mode = show['flags'][0]['name'] if 'OV' in show['flags'][0]['name'] else 'Deutsch' 
                 else:
                     mode = 'Deutsch'
                 if current_cinema in cinema_dictionary.keys():
                     cinema_dictionary[current_cinema].append((show['time'],mode)) 
                 else:
                     cinema_dictionary[current_cinema] = [(show['time'],mode)] 
-        name = movie['name']
+        name = movies[movie_ids[0]]['name']
         # only lowercase
         if name.isupper():
             name = name[0] + name[1::].lower()
@@ -65,9 +94,8 @@ def get_data_by_movie():
     """
     map_movie = {}
     movies = data["movies"]
-    for movie in movies.values():
-        if movie['id'] == None:
-            continue
+    for movie_ids in id_groups():
+        movie = movies[movie_ids[0]]
         if movie['hasTrailer']:
             trailer = movie['trailers'][0]['url']
         else:
@@ -82,5 +110,43 @@ def get_data_by_movie():
 
 data_by_movie = get_data_by_movie()
 cinema_per_movie = get_cinema_data()
+
+def get_letterboxd_rating():
+    """
+    Return dictionary that maps movie titles to their letterboxd rating
+    """
+    movies = data["movies"]
+    map_movie = {}
+    for movie_ids in id_groups():
+        movie = movies[movie_ids[0]]
+        if 'title_orig' in movie.keys():
+            orig_title = movie['title_orig']
+        else:
+            orig_title = movie['title']
+        res = requests.get("https://letterboxd.com/search/" +orig_title+"/")
+        if res.status_code != 200:
+            print("letterboxd went wrong")
+        bs_object = bs4.BeautifulSoup(res.text, 'html.parser')
+        url = bs_object.select('.results > li:nth-child(1) > div:nth-child(2) > h2:nth-child(1) > span:nth-child(1) > a:nth-child(1)')
+        if len(url) == 0:
+            continue
+        url = url[0].get('href')
+        res = requests.get("https://letterboxd.com"+str(url))
+        if res.status_code != 200:
+            print("letterboxd went wrong")
+        bs_object = bs4.BeautifulSoup(res.text, 'html.parser')
+        rating = bs_object.select('head > meta:nth-child(20)')
+        
+        name = movie['name']
+        # only lowercase
+        if name.isupper():
+            name = name[0] + name[1::].lower()
+        if len(rating) == 0 or not str(rating[0].get('content'))[0].isdigit():
+            continue
+        map_movie[name] = str(rating[0].get('content'))[0:4]
+    return map_movie
+
+letterboxd = get_letterboxd_rating()
+
 #if __name__ == "__main__":
-#    print(data_by_movie)
+#    print(get_letterboxd_rating())
