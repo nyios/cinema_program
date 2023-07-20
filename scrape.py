@@ -106,49 +106,14 @@ def get_data_by_movie():
         # only lowercase
         if name.isupper():
             name = name[0] + name[1::].lower()
+        if not ('description' in movie.keys() and 'duration' in movie.keys() and 'lazyImage' in movie.keys()):
+            continue
         map_movie[name] = (movie['duration'], movie['lazyImage'], movie['description'], trailer)
 
     return map_movie
 
 data_by_movie = get_data_by_movie()
 cinema_per_movie = get_cinema_data()
-
-def get_letterboxd_rating():
-    """
-    Return dictionary that maps movie titles to their letterboxd rating
-    """
-    movies = data["movies"]
-    map_movie = {}
-    for movie_ids in id_groups():
-        movie = movies[movie_ids[0]]
-        if 'title_orig' in movie.keys():
-            orig_title = movie['title_orig']
-        else:
-            orig_title = movie['title']
-        res = requests.get("https://letterboxd.com/search/" +orig_title+"/")
-        if res.status_code != 200:
-            print("letterboxd went wrong")
-        bs_object = bs4.BeautifulSoup(res.text, 'html.parser')
-        url = bs_object.select('.results > li:nth-child(1) > div:nth-child(2) > h2:nth-child(1) > span:nth-child(1) > a:nth-child(1)')
-        if len(url) == 0:
-            continue
-        url = url[0].get('href')
-        res = requests.get("https://letterboxd.com"+str(url))
-        if res.status_code != 200:
-            print("letterboxd went wrong")
-        bs_object = bs4.BeautifulSoup(res.text, 'html.parser')
-        rating = bs_object.select('head > meta:nth-child(20)')
-        
-        name = movie['name']
-        # only lowercase
-        if name.isupper():
-            name = name[0] + name[1::].lower()
-        if len(rating) == 0 or not str(rating[0].get('content'))[0].isdigit():
-            continue
-        map_movie[name] = str(rating[0].get('content'))[0:4]
-    return map_movie
-
-letterboxd = get_letterboxd_rating()
 
 if __name__ == "__main__":
     print(get_cinema_data())
