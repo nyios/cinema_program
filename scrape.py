@@ -2,6 +2,7 @@ import json
 import requests
 import bs4
 import os
+import Levenshtein
 from datetime import datetime
 
 DATE = datetime.today().strftime('%Y-%m-%d') if os.getenv('CINEMA_DATE') == None else os.getenv('CINEMA_DATE')
@@ -22,7 +23,17 @@ def build_URI():
 def get_json(uri):
     return requests.get(uri).json()
 
+def get_json_city():
+    res = requests.get("https://city-kinos.de/en/films")
+    if res.status_code != 200:
+        print("city-kinos went wrong")
+    bs_object = bs4.BeautifulSoup(res.text, 'html.parser')
+    # get movie data as dictionary from city kino website inside a script tag with id "NEXT_DATA"
+    movie_data = json.loads(bs_object.css.select('#__NEXT_DATA__')[0].string)
+    return movie_data['props']['pageProps']['films']
+
 data = get_json(build_URI())
+data_city = get_json_city()
 
 def id_groups():
     """
@@ -55,14 +66,13 @@ def id_groups():
 
 def get_cinema_data():
     """
-    return dictionary that maps movie names to a list of tuples containing:
+    return dictionary that maps movie titles to a list of tuples containing:
     - name of the cinema this movie is running in
     - a list of times this movie is showing and if it is OV/OmU/synchronized
     """
-    shows = data["shows"]
-    movies = data["movies"]
-    print(DATE)
-    shows_today = list(filter(lambda s : s["date"] == DATE, shows)) 
+    shows = data['shows']
+    movies = data['movies']
+    shows_today = list(filter(lambda s : s['date'] == DATE, shows)) 
     map_movie = {}
     groups = id_groups()
     for movie_ids in groups:
@@ -71,7 +81,8 @@ def get_cinema_data():
             if show['movieId'] in movie_ids:
                 current_cinema = CINEMAS[show['cinemaId']]
                 if show['flags']:
-                    mode = show['flags'][0]['name'] if 'OV' in show['flags'][0]['name'] else 'Deutsch' 
+                    mode_string = show['flags'][0]['name']
+                    mode = mode_string if 'OV' in mode_string or 'OmU' in mode_string  else 'Deutsch' 
                 else:
                     mode = 'Deutsch'
                 if current_cinema in cinema_dictionary.keys():
@@ -79,14 +90,24 @@ def get_cinema_data():
                 else:
                     cinema_dictionary[current_cinema] = [(show['time'],mode)] 
         name = movies[movie_ids[0]]['name']
-        # only lowercase
-        if name.isupper():
-            name = name[0] + name[1::].lower()
         if len(cinema_dictionary.items()) != 0:
             map_movie[name] = cinema_dictionary
+    
+    # incorporate city films
+    map_movie_city = get_city_data()
+    for (titleCity, showingsCity) in map_movie_city.items():
+        was_found = False
+        for (title, showings) in map_movie.items():
+            # this test is sometimes not enough but is good enough for now
+            if titleCity.lower() ==  title.lower():
+                showings['City'] = showingsCity
+                was_found = True
+                break
+        if not was_found:
+            map_movie[titleCity] = {'City': showingsCity}
     return map_movie
 
-def get_data_by_movie():
+def get_movie_data():
     """
     Return dictionary that maps movie titles to 
     - duration
@@ -95,7 +116,7 @@ def get_data_by_movie():
     - trailer, if available
     """
     map_movie = {}
-    movies = data["movies"]
+    movies = data['movies']
     for movie_ids in id_groups():
         movie = movies[movie_ids[0]]
         if movie['hasTrailer']:
@@ -103,16 +124,61 @@ def get_data_by_movie():
         else:
             trailer = ""
         name = movie['name']
-        # only lowercase
-        if name.isupper():
-            name = name[0] + name[1::].lower()
         if not ('description' in movie.keys() and 'duration' in movie.keys() and 'lazyImage' in movie.keys()):
             continue
         map_movie[name] = (movie['duration'], movie['lazyImage'], movie['description'], trailer)
 
+    # incorporate city films
+    map_movie_city = get_movie_data_city()
+    for (titleCity, infoCity) in map_movie_city.items():
+        was_found = False
+        for title in map_movie.keys():
+            if titleCity.lower() == title.lower():
+                was_found = True
+                break
+        if not was_found:
+            map_movie[titleCity] = infoCity
     return map_movie
 
-data_by_movie = get_data_by_movie()
+def get_city_data():
+    """
+    return dictionary that maps movie titles to a list containing tuples containing
+    times this movie is showing at DATE in city kino and if it is OV/OmU/synchronized
+    """
+    movie_map = {}
+    for movie in data_city:
+        if movie['fields']['title'] == 'Sneak Preview':
+            continue
+        sessions = movie['fields']['sessions']
+        shows_today = list(filter(lambda s : s['fields']['startTime'].startswith(DATE), sessions))
+        if not shows_today:
+            continue
+        shows = []
+        for show in shows_today:
+            time = str(datetime.fromisoformat(show['fields']['startTime']).time())
+            shows.append((time[:5], show['fields']['formats'][0]))
+        movie_map[movie['fields']['title']] = shows
+    return movie_map
+
+def get_movie_data_city():
+    """
+    Return dictionary that maps movie titles to 
+    - duration
+    - poster image url
+    - description
+    - trailer, if available
+    """
+    map_movie = {}
+    for movie in data_city:
+        if movie['fields']['title'] == 'Sneak Preview':
+            continue
+        map_movie[movie['fields']['title']] = (movie['fields']['runtime'], 
+                movie['fields']['heroImage']['fields']['image']['fields']['file']['url'],
+                movie['fields']['tagline'], "")
+
+    return map_movie
+
+data_by_movie = get_movie_data()
 cinema_per_movie = get_cinema_data()
 
 if __name__ == "__main__":

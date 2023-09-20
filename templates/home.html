@@ -7,10 +7,12 @@
     <a href="/{{movie}}" class="list-group-item list-group-item-action"><b>{{movie}}</b><br>
         {% for (cinema, list) in data[movie].items() %}
         <em>{{cinema}}</em><br>
+            <ul class="list-group" style="position:relative; left:20px">
             {% for (time, mode) in list %}
-                {{time}} {{mode}}
+            <li class="list-group item">{{time}} {{mode}}</li>
                 <br>
             {% endfor %}
+            </ul>
         {% endfor %}
     </a>
     {%else%}

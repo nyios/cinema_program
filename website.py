@@ -8,6 +8,11 @@ import fcntl
 import requests
 import bs4
 
+CINEMA_URLS = {'Arena': 'https://www.arena-kino.de/de/unser-gesamtes-filmprogramm',
+        'Royal Filmpalast': 'https://www.royal-muenchen.de/de/programm-tickets',
+        'Rio': 'https://riopalast.de/de/programm-tickets',
+        'Monopol': 'https://www.monopol-kino.de/de/programm-tickets',
+        'Museum Lichtspiele': 'https://www.museum-lichtspiele.de/programm'}
 
 app = Flask(__name__)
 
@@ -31,11 +36,11 @@ def movie_sites(movie):
             rating = 'No rating available'
         else:
             rating = str(rating[0].get('content'))[0:4]
-    return render_template('movie_site.html', name=movie, entry=data_by_movie[movie], rating=rating)
+    return render_template('movie_site.html', name=movie, entry=data_by_movie[movie], rating=rating, url="https://letterboxd.com"+str(url))
 
 @app.route('/')
 def home():
-    return render_template('home.html', movies=cinema_per_movie.keys(), data=cinema_per_movie, date=DATE)
+    return render_template('home.html', movies=cinema_per_movie.keys(), data=cinema_per_movie, date=DATE, urls=CINEMA_URLS)
 
 if __name__ == "__main__":
     app.run(host='127.0.0.0', port=5000)
