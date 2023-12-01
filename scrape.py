@@ -3,9 +3,10 @@ import requests
 import bs4
 import os
 import Levenshtein
+import sys
 from datetime import datetime
 
-DATE = datetime.today().strftime('%Y-%m-%d') if os.getenv('CINEMA_DATE') == None else os.getenv('CINEMA_DATE')
+DATE = datetime.today().strftime('%Y-%m-%d') if len(sys.argv) < 2 else sys.argv[1] 
 ARENA = 29
 ROYAL = 1111
 RIO = 748

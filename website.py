@@ -40,6 +40,7 @@ def movie_sites(movie):
 
 @app.route('/')
 def home():
+    print(DATE)
     return render_template('home.html', movies=cinema_per_movie.keys(), data=cinema_per_movie, date=DATE, urls=CINEMA_URLS)
 
 if __name__ == "__main__":
