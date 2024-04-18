@@ -1,6 +1,5 @@
 ## Kino Programm München
-Skript das Filme in ausgewählten Kinos ausgibt.
-Benutzt dafür einen lokalen Flaskserver.
+Gibt Filme in ausgewählten Kinos aus, läuft auf einem lokalen Flaskserver
 
 Starten durch
 ```
@@ -10,4 +9,19 @@ python3 website.py
 ```
 Dann entweder auf den Link klicken oder `http://127.0.0.0:5000` in einen Browser eingeben.
 
-Nimmt entweder den heutigen Tag, oder, falls gesetzt, das Datum in der variable CINEMA_DATE im `yyyy-mm-dd` format.
+```
+python3 website.py yyyy-mm-dd
+```
+Zeigt alle Filme am angegebenen Tag an. Falls kein Argument übergeben wurde, wird der heute Tag verwendet.
+
+### Features
+* Vorstellungen per Film mit Angabe von Kino und Uhrzeit
+* Subpage pro Film mit:
+    * Kurzbeschreibung und Poster
+    * Film Trailer
+    * Letterboxd Bewertung
+
+### TODOs
+* Bereich an Tagen als Parameter
+* Uhrzeit als Parameter
+* eigenens CSS statt Bootstrap
