@@ -2,11 +2,9 @@ import json
 import requests
 import bs4
 import os
-import Levenshtein
 import sys
 from datetime import datetime
 
-DATE = datetime.today().strftime('%Y-%m-%d') if len(sys.argv) < 2 else sys.argv[1] 
 ARENA = 29
 ROYAL = 1111
 RIO = 748
@@ -65,7 +63,7 @@ def id_groups():
 
 
 
-def get_cinema_data():
+def get_cinema_data(date):
     """
     return dictionary that maps movie titles to a list of tuples containing:
     - name of the cinema this movie is running in
@@ -73,7 +71,7 @@ def get_cinema_data():
     """
     shows = data['shows']
     movies = data['movies']
-    shows_today = list(filter(lambda s : s['date'] == DATE, shows)) 
+    shows_today = list(filter(lambda s : s['date'] == date, shows)) 
     map_movie = {}
     groups = id_groups()
     for movie_ids in groups:
@@ -95,7 +93,7 @@ def get_cinema_data():
             map_movie[name] = cinema_dictionary
     
     # incorporate city films
-    map_movie_city = get_city_data()
+    map_movie_city = get_city_data(date)
     for (titleCity, showingsCity) in map_movie_city.items():
         was_found = False
         for (title, showings) in map_movie.items():
@@ -141,23 +139,26 @@ def get_movie_data():
             map_movie[titleCity] = infoCity
     return map_movie
 
-def get_city_data():
+def get_city_data(date):
     """
     return dictionary that maps movie titles to a list containing tuples containing
-    times this movie is showing at DATE in city kino and if it is OV/OmU/synchronized
+    times this movie is showing at date in city kino and if it is OV/OmU/synchronized
     """
     movie_map = {}
     for movie in data_city:
         if movie['fields']['title'] == 'Sneak Preview':
             continue
         sessions = movie['fields']['sessions']
-        shows_today = list(filter(lambda s : s['fields']['startTime'].startswith(DATE), sessions))
+        shows_today = list(filter(lambda s : s['fields']['startTime'].startswith(date), sessions))
         if not shows_today:
             continue
         shows = []
         for show in shows_today:
             time = str(datetime.fromisoformat(show['fields']['startTime']).time())
-            shows.append((time[:5], show['fields']['formats'][0]))
+            if ('formats' in show['fields']):
+                shows.append((time[:5], show['fields']['formats'][0]))
+            else:
+                shows.append((time[:5], 'x'))
         movie_map[movie['fields']['title']] = shows
     return movie_map
 
@@ -179,8 +180,3 @@ def get_movie_data_city():
 
     return map_movie
 
-data_by_movie = get_movie_data()
-cinema_per_movie = get_cinema_data()
-
-if __name__ == "__main__":
-    print(get_cinema_data())
