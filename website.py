@@ -5,6 +5,8 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 import time
 import requests
 import bs4
+import webbrowser
+from threading import Timer
 from datetime import datetime
 
 CINEMA_URLS = {'Arena': 'https://www.arena-kino.de/de/unser-gesamtes-filmprogramm',
@@ -52,6 +54,10 @@ def home():
     cinema_per_movie = get_cinema_data(date)
     return render_template('home.html', movies=cinema_per_movie.keys(), data=cinema_per_movie, date=date, urls=CINEMA_URLS)
 
+def open_browser():
+    webbrowser.open_new("http://127.0.0.1:5000")
+
 if __name__ == "__main__":
-    app.run(host='127.0.0.0', port=5000)
+    Timer(1, open_browser).start()  # Open browser after 1 second
+    app.run(host='127.0.0.1', port=5000)
 
