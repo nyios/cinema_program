@@ -2,12 +2,9 @@
 from scrape import get_movie_data, get_cinema_data
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
-import os
 import time
-import fcntl
 import requests
 import bs4
-import sys
 from datetime import datetime
 
 CINEMA_URLS = {'Arena': 'https://www.arena-kino.de/de/unser-gesamtes-filmprogramm',

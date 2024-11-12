@@ -1,8 +1,6 @@
 import json
 import requests
 import bs4
-import os
-import sys
 from datetime import datetime
 
 ARENA = 29
