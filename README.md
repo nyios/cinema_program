@@ -1,5 +1,5 @@
 ## Kino Programm München
-Gibt Filme in ausgewählten Kinos aus, läuft auf einem lokalen Flaskserver
+Das Program startet einen lokalen Flaskserver und zeigt Filmvorstellungen in bestimmten Kinos in München für einen Tag an.
 
 Starten durch
 ```
@@ -7,12 +7,11 @@ cd cinema_program
 . .venv/bin/activate
 python3 website.py
 ```
-Dann entweder auf den Link klicken oder `http://127.0.0.0:5000` in einen Browser eingeben.
-
+Um alle Filme an einem bestimmten Tag zu sehen, gibt man das Datum als Commandline Parameter mit:
 ```
 python3 website.py yyyy-mm-dd
 ```
-Zeigt alle Filme am angegebenen Tag an. Falls kein Argument übergeben wurde, wird der heute Tag verwendet.
+Wird nichts übergeben, wird der heutige Tag genommen.
 
 ### Features
 * Vorstellungen per Film mit Angabe von Kino und Uhrzeit
